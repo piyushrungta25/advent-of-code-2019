@@ -25,6 +25,7 @@ impl IntCodeComputer {
 
     fn load_memory(&mut self, memory: Vec<u64>) -> &mut Self {
         self.memory = memory;
+        self.ip = 0;
         self
     }
 
@@ -62,23 +63,24 @@ impl IntCodeComputer {
 
 fn main() {
     let input: Vec<u64> = get_input().unwrap();
-    match IntCodeComputer::new()
-        .load_memory(input.clone())
-        .set_state(12, 2)
-        .run()
-    {
+    let mut computer = IntCodeComputer::new();
+
+    // part 1
+    computer.load_memory(input.clone()).set_state(12, 2);
+    match computer.run() {
         Ok(i) => println!("Part 1: {:?}", i),
         _ => panic!("unexpected error"),
     }
 
-    for noun in 0..99 {
-        for verb in 0..99 {
-            match IntCodeComputer::new()
-                .load_memory(input.clone())
-                .set_state(noun, verb)
-                .run()
-            {
-                Ok(19690720) => println!("Part 2: {:?}", 100 * noun + verb),
+    // part 2
+    for noun in 0..100 {
+        for verb in 0..100 {
+            computer.load_memory(input.clone()).set_state(noun, verb);
+            match computer.run() {
+                Ok(19690720) => {
+                    println!("Part 2: {:?}", 100 * noun + verb);
+                    break;
+                }
                 _ => {}
             }
         }
