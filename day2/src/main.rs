@@ -12,14 +12,14 @@ fn get_input() -> Result<Vec<u64>, Box<dyn Error>> {
 
 struct IntCodeComputer {
     memory: Vec<u64>,
-    ip: usize
+    ip: usize,
 }
 
 impl IntCodeComputer {
     fn new() -> Self {
         IntCodeComputer {
             memory: Vec::new(),
-            ip: 0
+            ip: 0,
         }
     }
 
@@ -62,18 +62,25 @@ impl IntCodeComputer {
 
 fn main() {
     let input: Vec<u64> = get_input().unwrap();
-    match IntCodeComputer::new().load_memory(input.clone()).set_state(12, 2).run() {
+    match IntCodeComputer::new()
+        .load_memory(input.clone())
+        .set_state(12, 2)
+        .run()
+    {
         Ok(i) => println!("Part 1: {:?}", i),
-        _ => panic!("unexpected error")
+        _ => panic!("unexpected error"),
     }
 
     for noun in 0..99 {
         for verb in 0..99 {
-            match IntCodeComputer::new().load_memory(input.clone()).set_state(noun, verb).run() {
-                Ok(19690720) => println!("Part 2: {:?}", 100*noun+verb),
+            match IntCodeComputer::new()
+                .load_memory(input.clone())
+                .set_state(noun, verb)
+                .run()
+            {
+                Ok(19690720) => println!("Part 2: {:?}", 100 * noun + verb),
                 _ => {}
             }
         }
     }
-
 }
