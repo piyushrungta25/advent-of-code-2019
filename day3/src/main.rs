@@ -133,14 +133,15 @@ fn main() {
         for line2 in &wire2 {
             match lines_intersect(*line1, *line2) {
                 Some(pt) => {
-	                min_manhatten = min(min_manhatten, pt.manhattan_distance());
-	                let d1 = line1.distance_from_start(pt);
+                    min_manhatten = min(min_manhatten, pt.manhattan_distance());
+                    let d1 = line1.distance_from_start(pt);
                     let d2 = line2.distance_from_start(pt);
                     min_distance = min(min_distance, w1_rl + d1 + w2_rl + d2);
                     w2_rl += line2.length();
-
                 }
-                _ => {w2_rl += line2.length();}
+                _ => {
+                    w2_rl += line2.length();
+                }
             }
         }
         w1_rl += line1.length();
