@@ -15,7 +15,23 @@ struct Line {
     end: Point,
 }
 
+
+impl Point {
+	fn manhattan_distance(&self) -> i64 {	// from origin
+		self.x.abs() + self.y.abs()
+	}
+}
+
+
 impl Line {
+	fn length(&self) -> i64 {
+		(self.start.x - self.end.x).abs() + (self.start.y - self.end.y).abs()
+	}
+
+	fn distance_from_start(&self, p: Point) -> i64 { // assume p is on this line
+		Line {start: self.start, end: p}.length()
+	}
+
     fn is_vertical(&self) -> bool {
         self.start.x == self.end.x
     }
@@ -107,11 +123,37 @@ fn main() {
     for line1 in &wire1 {
         for line2 in &wire2 {
             match lines_intersect(*line1, *line2) {
-                Some(pt) => min_distance = min(min_distance, pt.x.abs() + pt.y.abs()),
+                Some(pt) => min_distance = min(min_distance, pt.manhattan_distance()),
                 _ => {}
             }
         }
     }
 
-    println!("{:?}", min_distance);
+    println!("Part1: {:?}", min_distance);
+
+    // runnign lengths for w1 and w2
+    let mut w1_rl = 0;
+    let mut w2_rl = 0;
+    let mut min_distance = ::std::i64::MAX;
+
+
+    for line1 in &wire1 {
+        for line2 in &wire2 {
+        	match lines_intersect(*line1, *line2) {
+                Some(pt) => {
+                	let d1 = line1.distance_from_start(pt);
+                	let d2 = line2.distance_from_start(pt);
+	                min_distance = min(min_distance, w1_rl+d1+w2_rl+d2);
+	                w2_rl += line2.length();
+                }
+                _ => w2_rl += line2.length()
+            }
+        }
+
+    	w1_rl += line1.length();
+    	w2_rl = 0;
+    }
+
+    println!("Part2: {:?}", min_distance);
+
 }
