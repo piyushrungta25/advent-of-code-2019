@@ -121,41 +121,32 @@ fn lines_intersect(l1: Line, l2: Line) -> Option<Point> {
 
 fn main() {
     let (wire1, wire2) = get_input().unwrap();
+    let mut min_manhatten = ::std::i64::MAX;
     let mut min_distance = ::std::i64::MAX;
+
+    // runnign lengths for w1 and w2
+    let mut w1_rl = 0;
+    let mut w2_rl = 0;
 
     // the input is small enough, lets brute force
     for line1 in &wire1 {
         for line2 in &wire2 {
             match lines_intersect(*line1, *line2) {
-                Some(pt) => min_distance = min(min_distance, pt.manhattan_distance()),
-                _ => {}
-            }
-        }
-    }
-
-    println!("Part1: {:?}", min_distance);
-
-    // runnign lengths for w1 and w2
-    let mut w1_rl = 0;
-    let mut w2_rl = 0;
-    let mut min_distance = ::std::i64::MAX;
-
-    for line1 in &wire1 {
-        for line2 in &wire2 {
-            match lines_intersect(*line1, *line2) {
                 Some(pt) => {
-                    let d1 = line1.distance_from_start(pt);
+	                min_manhatten = min(min_manhatten, pt.manhattan_distance());
+	                let d1 = line1.distance_from_start(pt);
                     let d2 = line2.distance_from_start(pt);
                     min_distance = min(min_distance, w1_rl + d1 + w2_rl + d2);
                     w2_rl += line2.length();
+
                 }
-                _ => w2_rl += line2.length(),
+                _ => {w2_rl += line2.length();}
             }
         }
-
         w1_rl += line1.length();
         w2_rl = 0;
     }
 
+    println!("Part1: {:?}", min_manhatten);
     println!("Part2: {:?}", min_distance);
 }
