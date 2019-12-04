@@ -50,15 +50,15 @@ impl Line {
 
     fn sorted_points(&self) -> (Point, Point) {
         let (p1, p2) = self.points();
-        if p1.x == p2.x {
-            return if p1.y < p2.y { (p1, p2) } else { (p2, p1) };
+        return if p1.y < p2.y || p1.x < p2.x {
+            (p1, p2)
         } else {
-            return if p1.x < p2.x { (p1, p2) } else { (p2, p1) };
-        }
+            (p2, p1)
+        };
     }
 }
 
-fn get_lines(w: String) -> Vec<Line> {
+fn get_lines(w: &str) -> Vec<Line> {
     let mut last_pos = Point { x: 0, y: 0 };
     w.split(",")
         .map(|x| {
@@ -100,7 +100,7 @@ fn get_input() -> Result<(Vec<Line>, Vec<Line>), Box<dyn Error>> {
     let mut s = String::new();
     f.read_to_string(&mut s)?;
 
-    let mut lines: Vec<Vec<Line>> = s.split("\n").map(str::to_owned).map(get_lines).collect();
+    let mut lines: Vec<Vec<Line>> = s.split("\n").map(get_lines).collect();
 
     let l2 = lines.remove(1);
     let l1 = lines.remove(0);
@@ -133,16 +133,17 @@ fn main() {
         for line2 in &wire2 {
             match lines_intersect(*line1, *line2) {
                 Some(pt) => {
+                    // part 1
                     min_manhatten = min(min_manhatten, pt.manhattan_distance());
+
+                    // part 2
                     let d1 = line1.distance_from_start(pt);
                     let d2 = line2.distance_from_start(pt);
                     min_distance = min(min_distance, w1_rl + d1 + w2_rl + d2);
-                    w2_rl += line2.length();
                 }
-                _ => {
-                    w2_rl += line2.length();
-                }
+                _ => {}
             }
+            w2_rl += line2.length();
         }
         w1_rl += line1.length();
         w2_rl = 0;
