@@ -1,22 +1,45 @@
-fn is_password(mut d: i32) -> (bool, bool) {
+fn reverse_digit_iter(mut d: u32) -> impl Iterator<Item = u32> {
+    ::std::iter::from_fn(move || {
+        if d == 0 {
+            return None;
+        } else {
+            let n = d % 10;
+            d /= 10;
+            return Some(n);
+        }
+    })
+}
+
+fn is_decreasing(d: u32) -> bool {
+    let mut it = reverse_digit_iter(d);
+    let mut last = it.next().unwrap();
+
+    for i in it {
+        if i > last {
+            return false;
+        }
+        last = i;
+    }
+    true
+}
+
+fn is_password(d: u32) -> (bool, bool) {
+    if !is_decreasing(d) {
+        return (false, false);
+    }
+
     let mut is_password = false;
     let mut is_password_strict = false;
 
+    let mut it = reverse_digit_iter(d);
+    let mut last = it.next().unwrap();
     let mut num_adjacent = 1;
-    let mut last = d % 10;
-    d /= 10;
 
-    while d > 0 {
-        let i = d % 10;
-        d /= 10;
+    for i in it {
         if i == last {
             num_adjacent += 1;
             is_password = true;
         } else {
-            if i > last {
-                // should be decreasing since we are iterating in reverse order
-                return (false, false);
-            }
             if num_adjacent == 2 {
                 is_password_strict = true;
             }
