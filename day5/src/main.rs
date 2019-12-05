@@ -31,7 +31,7 @@ enum Instruction {
 struct IntCodeComputer {
     memory: Vec<i32>,
     input: Vec<i32>,
-    output: Vec<i32>,
+    output: Option<i32>,
     ip: usize,
 }
 
@@ -40,7 +40,7 @@ impl IntCodeComputer {
         IntCodeComputer {
             memory: Vec::new(),
             input: Vec::new(),
-            output: Vec::new(),
+            output: None,
             ip: 0,
         }
     }
@@ -125,7 +125,7 @@ impl IntCodeComputer {
     }
 
     fn emit_output(&mut self, param: Parameter) {
-        self.output.push(self.unwrap_value(param));
+        self.output = Some(self.unwrap_value(param));
     }
 
     fn jump(&mut self, param: Parameter) {
@@ -185,14 +185,12 @@ fn main() {
 
     // part 1
     computer.load_memory(input.clone()).set_input(vec![1]).run();
-    let part1 = computer.output.last().unwrap();
-    assert_eq!(*part1, 10987514);
+    let part1 = computer.output.unwrap();
     println!("Part 1: {:?}", part1);
 
     // part2
     computer.load_memory(input.clone()).set_input(vec![5]).run();
-    let part2 = computer.output.last().unwrap();
-    assert_eq!(*part2, 14195011);
+    let part2 = computer.output.unwrap();
     println!("Part 2: {:?}", part2);
 
 }
