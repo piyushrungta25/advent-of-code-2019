@@ -17,14 +17,14 @@ enum Parameter {
 }
 
 enum Instruction {
-    Add(Parameter, Parameter, Parameter),
-    Mul(Parameter, Parameter, Parameter),
+    Add((Parameter, Parameter, Parameter)),
+    Mul((Parameter, Parameter, Parameter)),
     Input(Parameter),
     Output(Parameter),
-    JumpIfTrue(Parameter, Parameter),
-    JumpIfFalse(Parameter, Parameter),
-    LessThan(Parameter, Parameter, Parameter),
-    Equals(Parameter, Parameter, Parameter),
+    JumpIfTrue((Parameter, Parameter)),
+    JumpIfFalse((Parameter, Parameter)),
+    LessThan((Parameter, Parameter, Parameter)),
+    Equals((Parameter, Parameter, Parameter)),
     Halt
 }
 
@@ -56,21 +56,37 @@ impl IntCodeComputer {
         self
     }
 
-    fn set_state(&mut self, noun: i32, verb: i32) -> &mut Self {
-        self.memory[1] = noun;
-        self.memory[2] = verb;
-        self
+    fn fetch_word(&mut self) -> i32 {
+        let word = self.memory[self.ip];
+        self.ip+=1;
+        word
     }
 
-    fn fetch_parameter(&mut self, mode: i32) -> Parameter {
-        let param = match mode {
-            0 => Parameter::Position(self.memory[self.ip]),
-            1 => Parameter::Immediate(self.memory[self.ip]),
+    fn _fetch_parameter(&mut self, mode: i32) -> Parameter {
+        let word = self.fetch_word();
+        match mode {
+            0 => Parameter::Position(word),
+            1 => Parameter::Immediate(word),
             _ => panic!("unknown parameter mode")
-        };
+        }
+    }
 
-        self.ip+=1;
-        param
+    fn fetch_param1(&mut self, opcode: i32) -> Parameter {
+        self._fetch_parameter(opcode%10)
+    }
+
+    fn fetch_param2(&mut self, mut opcode: i32) -> (Parameter, Parameter) {
+        let p1 = self.fetch_param1(opcode);
+        opcode /= 10;
+        let p2 = self._fetch_parameter(opcode%10);
+        (p1, p2)
+    }
+
+    fn fetch_param3(&mut self, mut opcode: i32) -> (Parameter, Parameter, Parameter) {
+        let (p1, p2) = self.fetch_param2(opcode);
+        opcode /= 100;
+        let p3 = self._fetch_parameter(opcode%10);
+        (p1, p2, p3)
     }
 
     fn unwrap_value(&self, param: Parameter) -> i32 {
@@ -81,149 +97,81 @@ impl IntCodeComputer {
     }
 
     fn fetch_instruction(&mut self) -> Instruction {
-        let mut opcode: i32 = self.memory[self.ip];
-        self.ip+=1;
+        let mut opcode = self.fetch_word();
         let inst = opcode % 100;
         opcode /= 100;
 
         match inst {
-            1|2 => {
-                let param1 = self.fetch_parameter(opcode % 10);
-                opcode /= 10;
-                let param2 = self.fetch_parameter(opcode % 10);
-                opcode /= 10;
-                let param3 = self.fetch_parameter(opcode % 10);
-                match inst {
-                    1 => Instruction::Add(param1, param2, param3),
-                    2 => Instruction::Mul(param1, param2, param3),
-                    _ => panic!("bad")
-                }
-
-            },
-            3|4 => {
-                let param = self.fetch_parameter(opcode % 10);
-                match inst {
-                    3 => Instruction::Input(param),
-                    4 => Instruction::Output(param),
-                    _ => panic!("bad")
-                }
-            },
-            5|6 => {
-                let param1 = self.fetch_parameter(opcode % 10);
-                opcode /= 10;
-                let param2 = self.fetch_parameter(opcode % 10);
-
-                match inst {
-                    5 => Instruction::JumpIfTrue(param1, param2),
-                    6 => Instruction::JumpIfFalse(param1, param2),
-                    _ => panic!("bad")
-                }
-
-
-            },
-            7|8 => {
-                let param1 = self.fetch_parameter(opcode % 10);
-                opcode /= 10;
-                let param2 = self.fetch_parameter(opcode % 10);
-                opcode /= 10;
-                let param3 = self.fetch_parameter(opcode % 10);
-
-                match inst {
-                    7 => Instruction::LessThan(param1, param2, param3),
-                    8 => Instruction::Equals(param1, param2, param3),
-                    _ => panic!("bad")
-                }
-
-            },
-            99 => {Instruction::Halt}
-            _ => {panic!("unknown instruction")}
+            1 => Instruction::Add(self.fetch_param3(opcode)),
+            2 => Instruction::Mul(self.fetch_param3(opcode)),
+            3 => Instruction::Input(self.fetch_param1(opcode)),
+            4 => Instruction::Output(self.fetch_param1(opcode)),
+            5 => Instruction::JumpIfTrue(self.fetch_param2(opcode)),
+            6 => Instruction::JumpIfFalse(self.fetch_param2(opcode)),
+            7 => Instruction::LessThan(self.fetch_param3(opcode)),
+            8 => Instruction::Equals(self.fetch_param3(opcode)),
+            99 => Instruction::Halt,
+            _ => panic!("unknown instruction")
         }
+    }
+
+    fn store_val(&mut self, param: Parameter, val: i32) {
+        match param {
+            Parameter::Position(out) => {
+                self.memory[out as usize] = val;
+            },
+            _ => panic!("can not store to parameter in immediate mode")
+        }
+    }
+
+    fn emit_output(&mut self, param: Parameter) {
+        self.output.push(self.unwrap_value(param));
+    }
+
+    fn jump(&mut self, param: Parameter) {
+        self.ip = self.unwrap_value(param) as usize;
     }
 
     fn run(&mut self) {
         'program_loop: loop {
             let inst = self.fetch_instruction();
             match inst {
-                Instruction::Add(param1, param2, param3) => {
+                Instruction::Add((param1, param2, param3)) => {
                     let op1 = self.unwrap_value(param1);
                     let op2 = self.unwrap_value(param2);
-
-                    match param3 {
-                        Parameter::Position(out) => {
-                            self.memory[out as usize] = op1 + op2;
-                        },
-                        _ => panic!("bad bad bad")
-                    }
+                    self.store_val(param3, op1+op2);
                 },
-                Instruction::Mul(param1, param2, param3) => {
+                Instruction::Mul((param1, param2, param3)) => {
                     let op1 = self.unwrap_value(param1);
                     let op2 = self.unwrap_value(param2);
-
-                    match param3 {
-                        Parameter::Position(out) => {
-                            self.memory[out as usize] = op1 * op2;
-                        },
-                        _ => panic!("bad bad bad")
-                    }
+                    self.store_val(param3, op1*op2);
                 },
                 Instruction::Input(param) => {
-                    match param {
-                        Parameter::Position(pos) => {
-                            self.memory[pos as usize] = self.input.remove(0);
-                        },
-                        _ => panic!("bad bad bad")
-                    }
+                    let inp = self.input.remove(0);
+                    self.store_val(param, inp);
                 },
                 Instruction::Output(param) => {
-                    match param {
-                        Parameter::Position(pos) => {
-                            self.output.push(self.memory[pos as usize]);
-                        },
-                        Parameter::Immediate(val) => {
-                            self.output.push(val);
-
-                        }
+                    self.emit_output(param);
+                },
+                Instruction::JumpIfTrue((param1, param2)) => {
+                    if self.unwrap_value(param1) != 0 {
+                        self.jump(param2);
                     }
                 },
-                Instruction::JumpIfTrue(param1, param2) => {
-                    match self.unwrap_value(param1) != 0 {
-                        true => self.ip = self.unwrap_value(param2) as usize,
-                        _ => {}
+                Instruction::JumpIfFalse((param1, param2)) => {
+                    if self.unwrap_value(param1) == 0 {
+                        self.jump(param2);
                     }
                 },
-                Instruction::JumpIfFalse(param1, param2) => {
-                    match self.unwrap_value(param1) == 0 {
-                        true => self.ip = self.unwrap_value(param2) as usize,
-                        _ => {}
-                    }
-                },
-                Instruction::LessThan(param1, param2, param3) => {
+                Instruction::LessThan((param1, param2, param3)) => {
                     let op1 = self.unwrap_value(param1);
                     let op2 = self.unwrap_value(param2);
-
-                    match param3 {
-                        Parameter::Position(pos) => {
-                            self.memory[pos as usize] = match op1 < op2 {
-                                true => 1,
-                                _ => 0
-                            }
-                        },
-                        _ => panic!("bad bad bad")
-                    }
+                    self.store_val(param3, if op1 < op2 {1} else {0})
                 },
-                Instruction::Equals(param1, param2, param3) => {
+                Instruction::Equals((param1, param2, param3)) => {
                     let op1 = self.unwrap_value(param1);
                     let op2 = self.unwrap_value(param2);
-
-                    match param3 {
-                        Parameter::Position(pos) => {
-                            self.memory[pos as usize] = match op1 == op2 {
-                                true => 1,
-                                _ => 0
-                            }
-                        },
-                        _ => panic!("bad bad bad")
-                    }
+                    self.store_val(param3, if op1 == op2 {1} else {0})
                 },
                 Instruction::Halt => break 'program_loop,
             }
@@ -237,11 +185,11 @@ fn main() {
 
     // part 1
     computer.load_memory(input.clone()).set_input(vec![1]).run();
-
     let part1 = computer.output.last().unwrap();
     assert_eq!(*part1, 10987514);
     println!("Part 1: {:?}", part1);
 
+    // part2
     computer.load_memory(input.clone()).set_input(vec![5]).run();
     let part2 = computer.output.last().unwrap();
     assert_eq!(*part2, 14195011);
