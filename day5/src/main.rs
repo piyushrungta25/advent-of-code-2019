@@ -131,7 +131,7 @@ impl IntCodeComputer {
         self.ip = self.unwrap_value(param) as usize;
     }
 
-    fn run(&mut self) -> &mut self {
+    fn run(&mut self) -> &mut Self {
         'program_loop: loop {
             let inst = self.fetch_instruction();
             match inst {
