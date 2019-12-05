@@ -132,7 +132,7 @@ impl IntCodeComputer {
         self.ip = self.unwrap_value(param) as usize;
     }
 
-    fn run(&mut self) {
+    fn run(&mut self) -> &mut self {
         'program_loop: loop {
             let inst = self.fetch_instruction();
             match inst {
@@ -176,6 +176,7 @@ impl IntCodeComputer {
                 Instruction::Halt => break 'program_loop,
             }
         }
+        self
     }
 }
 
@@ -183,14 +184,10 @@ fn main() {
     let input: Vec<i32> = get_input().unwrap();
     let mut computer = IntCodeComputer::new();
 
-    // part 1
-    computer.load_memory(input.clone()).set_input(vec![1]).run();
-    let part1 = computer.output.unwrap();
+    let part1 = computer.load_memory(input.clone()).set_input(vec![1]).run().output.unwrap();
     println!("Part 1: {:?}", part1);
 
-    // part2
-    computer.load_memory(input.clone()).set_input(vec![5]).run();
-    let part2 = computer.output.unwrap();
+    let part2 = computer.load_memory(input.clone()).set_input(vec![5]).run().output.unwrap();
     println!("Part 2: {:?}", part2);
 
 }
