@@ -95,6 +95,25 @@ impl IntCodeComputer {
         }
     }
 
+    fn store_val(&mut self, param: Parameter, val: i32) {
+        match param {
+            Parameter::Position(out) => {
+                self.memory[out as usize] = val;
+            }
+            _ => panic!("can not store to parameter in immediate mode"),
+        }
+    }
+
+
+    fn emit_output(&mut self, param: Parameter) {
+        self.output = Some(self.unwrap_value(param));
+    }
+
+
+    fn jump(&mut self, param: Parameter) {
+        self.ip = self.unwrap_value(param) as usize;
+    }
+
     fn fetch_instruction(&mut self) -> Instruction {
         let mut opcode = self.fetch_word();
         let inst = opcode % 100;
@@ -112,23 +131,6 @@ impl IntCodeComputer {
             99 => Instruction::Halt,
             _ => panic!("unknown instruction"),
         }
-    }
-
-    fn store_val(&mut self, param: Parameter, val: i32) {
-        match param {
-            Parameter::Position(out) => {
-                self.memory[out as usize] = val;
-            }
-            _ => panic!("can not store to parameter in immediate mode"),
-        }
-    }
-
-    fn emit_output(&mut self, param: Parameter) {
-        self.output = Some(self.unwrap_value(param));
-    }
-
-    fn jump(&mut self, param: Parameter) {
-        self.ip = self.unwrap_value(param) as usize;
     }
 
     fn run(&mut self) -> &mut Self {
