@@ -62,13 +62,14 @@ impl IntCodeComputer {
         }
     }
 
-    fn get_value_at_pos(&mut self, i: i64) -> i64 {
+    pub fn get_value_at_pos(&mut self, i: i64) -> i64 {
         if (i as usize) >= self.memory.len() {
             return 0;
         }
         self.memory[i as usize]
     }
-    fn store_value_at_pos(&mut self, i: i64, value: i64) {
+
+    pub fn store_value_at_pos(&mut self, i: i64, value: i64) {
         self.try_resize_memory(i);
         self.memory[i as usize] = value;
     }
