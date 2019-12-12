@@ -43,7 +43,6 @@ impl EHPR {
         }
     }
 
-
     fn set_location(&mut self, loc: (i64, i64)) {
         self.loc = loc
     }
@@ -107,6 +106,7 @@ impl EHPR {
     fn tick(&mut self) -> bool {
         match self.comp.run() {
             Signal::Halt => return false, // the robot is done
+            Signal::NeedsInput => self.comp.feed_input(self.get_color()),
             Signal::ProducedOutput => {
                 let paint_color = self.comp.get_output().unwrap();
                 self.paint_board(paint_color);
@@ -115,9 +115,6 @@ impl EHPR {
                 self.comp.run_till_signal(Signal::ProducedOutput);
                 let direction = self.comp.get_output().unwrap();
                 self.turn_and_move(direction);
-
-                // this input will be needed in the next run
-                self.comp.feed_input(self.get_color())
             }
             _ => panic!("this shouldn't happen"),
         }
@@ -144,7 +141,6 @@ fn part1(inp: &Vec<i64>) -> i64 {
     // then trimming to the required size
     let mut robot = EHPR::new(&inp, (101, 101));
     robot.set_location((50, 50));
-    robot.comp.feed_input(BLACK);
 
     while robot.tick() {
         if !hs.contains(&robot.loc) {
@@ -160,7 +156,6 @@ fn part2(inp: &Vec<i64>) {
     // this was found by doing a run on much bigger board
     let mut robot = EHPR::new(&inp, (6, 45));
     robot.board[0][0] = WHITE;
-    robot.comp.feed_input(WHITE);
     while robot.tick() {}
     robot.print_board();
 }
