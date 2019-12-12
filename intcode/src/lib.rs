@@ -50,6 +50,10 @@ impl IntCodeComputer {
         self
     }
 
+    fn roll_back_input_instruction(&mut self) {
+        self.ip -= 2;
+    }
+
     fn set_input(&mut self, input: Vec<i64>) -> &mut Self {
         self.input = input;
         self
@@ -183,6 +187,7 @@ impl IntCodeComputer {
             }
             Instruction::Input(param) => {
                 if self.input.is_empty() {
+                    self.roll_back_input_instruction();
                     return Signal::NeedsInput;
                 }
                 let inp = self.input.remove(0);
