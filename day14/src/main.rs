@@ -58,6 +58,11 @@ fn part1_recursive_helper(
 ) {
     let mut quantity = quantity;
 
+    if item == "ORE" {
+    	*ore_count += quantity;
+    	return;	// terminate recursion
+    }
+
     // try fulfilling by surplus already produced
     let surplus = surplus_mapping.entry(item.to_string()).or_default();
     if *surplus >= quantity {
@@ -83,18 +88,13 @@ fn part1_recursive_helper(
 
     // lets recurse for the dependecies of the current chemical
     for dependency in reaction.dependencies.iter() {
-        if dependency.name == "ORE" {
-            //dont recurse
-            *ore_count += dependency.count * num_reaction;
-        } else {
-            part1_recursive_helper(
-                dependency.name.as_str(),
-                dependency.count * num_reaction,
-                &mappings,
-                surplus_mapping,
-                ore_count,
-            );
-        }
+        part1_recursive_helper(
+            dependency.name.as_str(),
+            dependency.count * num_reaction,
+            &mappings,
+            surplus_mapping,
+            ore_count,
+        );
     }
 }
 
